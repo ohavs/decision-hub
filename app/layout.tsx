@@ -20,7 +20,7 @@ export const metadata: Metadata = {
   title: 'Decision Hub - Ultimate Group Games',
   description: 'A comprehensive multi-game decision hub for groups with finger dice, coin flip, dice roller, and more',
   generator: 'v0.app',
-  manifest: '/manifest.json',
+  manifest: process.env.NODE_ENV === 'production' ? '/decision-hub/manifest.json' : '/manifest.json',
   icons: {
     icon: [
       {

@@ -14,15 +14,16 @@ interface PlayerZone {
   reactionTime: number | null
   tappedTooEarly: boolean
   color: string
+  bgLight: string
 }
 
 const ZONE_COLORS = [
-  "#ef4444", // red
-  "#3b82f6", // blue
-  "#22c55e", // green
-  "#eab308", // yellow
-  "#a855f7", // purple
-  "#f97316", // orange
+  { hex: "#ef4444", bgLight: "rgba(239, 68, 68, 0.08)" }, // red
+  { hex: "#3b82f6", bgLight: "rgba(59, 130, 246, 0.08)" }, // blue
+  { hex: "#10b981", bgLight: "rgba(16, 185, 129, 0.08)" }, // green
+  { hex: "#eab308", bgLight: "rgba(234, 179, 8, 0.08)" }, // yellow
+  { hex: "#a855f7", bgLight: "rgba(168, 85, 247, 0.08)" }, // purple
+  { hex: "#f97316", bgLight: "rgba(249, 115, 22, 0.08)" }, // orange
 ]
 
 export function ReactionTime() {
@@ -46,7 +47,8 @@ export function ReactionTime() {
           name: `${language === "he" ? "שחקן" : "Player"} ${i + 1}`,
           reactionTime: null,
           tappedTooEarly: false,
-          color: ZONE_COLORS[i % ZONE_COLORS.length],
+          color: ZONE_COLORS[i % ZONE_COLORS.length].hex,
+          bgLight: ZONE_COLORS[i % ZONE_COLORS.length].bgLight,
         }))
       )
     }
@@ -67,7 +69,8 @@ export function ReactionTime() {
     }, delay)
   }, [soundEnabled])
 
-  const handleZoneTap = useCallback((playerId: number) => {
+  const handleZoneTap = useCallback((playerId: number, e: React.MouseEvent | React.TouchEvent) => {
+    e.preventDefault()
     if (phase === "setup" || phase === "result") return
     
     if (phase === "waiting") {
@@ -128,21 +131,9 @@ export function ReactionTime() {
     }
   }, [])
 
-  const getPhaseColor = () => {
-    switch (phase) {
-      case "waiting":
-        return "#ef4444" // red
-      case "go":
-        return "#22c55e" // green
-      case "tooEarly":
-        return "#ef4444" // red
-      default:
-        return "transparent"
-    }
-  }
-
   return (
-    <div className="h-full flex flex-col" dir={direction}>
+    <div className="h-full flex flex-col bg-background select-none" dir={direction}>
+      
       {/* Setup phase */}
       {phase === "setup" && (
         <motion.div
@@ -150,11 +141,16 @@ export function ReactionTime() {
           animate={{ opacity: 1 }}
           className="flex-1 flex flex-col items-center justify-center p-6"
         >
-          <h2 className="text-xl font-semibold text-foreground mb-6">
+          {/* Decorative Blob */}
+          <div className="absolute inset-0 overflow-hidden pointer-events-none opacity-40">
+            <div className="absolute top-1/4 right-1/4 w-72 h-72 rounded-full bg-red-200/20 blur-3xl" />
+          </div>
+
+          <h2 className="text-xs font-black uppercase text-muted-foreground tracking-wider mb-6">
             {language === "he" ? "מספר שחקנים" : "Number of Players"}
           </h2>
           
-          <div className="flex items-center gap-3 mb-8">
+          <div className="flex items-center justify-center gap-3 mb-10 relative z-10">
             {[2, 3, 4, 5, 6].map(count => (
               <button
                 key={count}
@@ -162,10 +158,10 @@ export function ReactionTime() {
                   setPlayerCount(count)
                   playSound("click", soundEnabled)
                 }}
-                className={`w-12 h-12 rounded-xl font-semibold transition-all ${
+                className={`w-12 h-12 rounded-full border-2 font-black text-sm transition-all cursor-pointer shadow-sm ${
                   playerCount === count
-                    ? "bg-primary text-primary-foreground scale-110"
-                    : "bg-secondary/50 text-foreground/70 hover:bg-secondary"
+                    ? "border-foreground bg-foreground text-background scale-110"
+                    : "border-border bg-card text-muted-foreground hover:bg-secondary/40"
                 }`}
               >
                 {count}
@@ -173,80 +169,82 @@ export function ReactionTime() {
             ))}
           </div>
           
-          <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
+          {/* Start Game capsule button */}
+          <button
             onClick={startGame}
-            className="px-12 py-4 rounded-2xl bg-gradient-to-r from-red-500 to-orange-600 text-white font-semibold text-lg shadow-lg"
-            style={{
-              boxShadow: "0 10px 40px rgba(239, 68, 68, 0.4)",
-            }}
+            className="relative z-10 w-full max-w-xs flex items-center justify-between px-8 py-5 rounded-full bg-foreground text-background font-black text-sm shadow-[0_12px_36px_rgba(0,0,0,0.15)] hover:bg-foreground/90 transition-all cursor-pointer"
           >
-            {t("game.start")}
-          </motion.button>
+            <span>{t("game.start")}</span>
+            <span className="tracking-widest opacity-80" dir="ltr"> &gt;&gt;&gt;</span>
+          </button>
         </motion.div>
       )}
 
       {/* Game phase */}
       {(phase === "waiting" || phase === "go" || phase === "tooEarly") && (
-        <div className="flex-1 flex flex-col">
-          {/* Status indicator */}
+        <div className="flex-1 flex flex-col px-4 pt-20 pb-4">
+          {/* Status banner indicator */}
           <motion.div
-            animate={{ backgroundColor: getPhaseColor() }}
-            className="py-4 text-center"
+            className={`w-full py-4 px-6 rounded-full text-center border-2 mb-4 ${
+              phase === "waiting" 
+                ? "bg-red-50 border-red-200 text-red-600" 
+                : phase === "go" 
+                ? "bg-emerald-50 border-emerald-200 text-emerald-600"
+                : "bg-red-50 border-red-200 text-red-600"
+            }`}
           >
-            <p className="text-white font-bold text-xl">
+            <p className="font-black text-base uppercase tracking-wider">
               {phase === "waiting" && t("reaction.wait")}
               {phase === "go" && t("reaction.go")}
               {phase === "tooEarly" && t("reaction.tooEarly")}
             </p>
           </motion.div>
           
-          {/* Player zones */}
+          {/* Player touch zones */}
           <div 
-            className={`flex-1 grid gap-1 p-1 ${
+            className={`flex-1 grid gap-4 ${
               playerCount <= 2 ? "grid-rows-2" : 
               playerCount <= 4 ? "grid-rows-2 grid-cols-2" :
               "grid-rows-3 grid-cols-2"
             }`}
           >
             {players.map((player) => (
-              <motion.button
+              <button
                 key={player.id}
-                onTouchStart={() => handleZoneTap(player.id)}
-                onClick={() => handleZoneTap(player.id)}
+                onTouchStart={(e) => handleZoneTap(player.id, e)}
+                onMouseDown={(e) => handleZoneTap(player.id, e)}
                 disabled={player.reactionTime !== null || player.tappedTooEarly}
-                className="relative flex items-center justify-center rounded-xl transition-all"
+                className="relative flex items-center justify-center rounded-[32px] border-4 transition-all shadow-[0_8px_24px_rgba(0,0,0,0.015)] overflow-hidden cursor-pointer"
                 style={{
                   backgroundColor: player.tappedTooEarly 
-                    ? "rgba(239, 68, 68, 0.3)" 
+                    ? "rgba(239, 68, 68, 0.15)" 
                     : player.reactionTime !== null
-                    ? "rgba(34, 197, 94, 0.3)"
-                    : `${player.color}20`,
-                  border: `2px solid ${player.color}`,
+                    ? "rgba(16, 185, 129, 0.15)"
+                    : player.bgLight,
+                  borderColor: player.tappedTooEarly 
+                    ? "#ef4444" 
+                    : player.reactionTime !== null
+                    ? "#10b981"
+                    : player.color,
                 }}
-                animate={phase === "go" && player.reactionTime === null ? {
-                  scale: [1, 1.02, 1],
-                } : {}}
-                transition={{ duration: 0.5, repeat: Infinity }}
               >
-                <div className="text-center">
-                  <p className="font-semibold text-foreground">{player.name}</p>
+                <div className="text-center p-3">
+                  <p className="font-black text-base text-foreground mb-1">{player.name}</p>
                   {player.reactionTime !== null && (
                     <motion.p
-                      initial={{ opacity: 0, scale: 0.5 }}
+                      initial={{ opacity: 0, scale: 0.8 }}
                       animate={{ opacity: 1, scale: 1 }}
-                      className="text-2xl font-bold"
+                      className="text-2xl font-black tracking-tight"
                       style={{ color: player.color }}
                     >
                       {player.reactionTime} {t("reaction.ms")}
                     </motion.p>
                   )}
                   {player.tappedTooEarly && (
-                    <p className="text-red-500 font-medium">{t("reaction.tooEarly")}</p>
+                    <p className="text-red-500 font-extrabold text-sm">{t("reaction.tooEarly")}</p>
                   )}
                 </div>
-              </motion.button>
+              </button>
             ))}
           </div>
         </div>
@@ -257,44 +255,49 @@ export function ReactionTime() {
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          className="flex-1 flex flex-col items-center justify-center p-6"
+          className="flex-1 flex flex-col items-center justify-center p-6 pt-20"
         >
+          {/* Decorative Blob */}
+          <div className="absolute inset-0 overflow-hidden pointer-events-none opacity-40">
+            <div className="absolute bottom-1/4 right-1/4 w-72 h-72 rounded-full bg-emerald-200/20 blur-3xl" />
+          </div>
+
           <motion.div
-            initial={{ scale: 0 }}
+            initial={{ scale: 0.8 }}
             animate={{ scale: 1 }}
-            transition={{ type: "spring", stiffness: 200 }}
-            className="text-center mb-8"
+            transition={{ type: "spring", stiffness: 350, damping: 22 }}
+            className="text-center mb-8 relative z-10"
           >
-            <p className="text-muted-foreground mb-2">{t("game.winner")}</p>
+            <p className="text-xs font-black uppercase text-muted-foreground tracking-wider mb-2">{t("game.winner")}</p>
             <p 
-              className="text-4xl font-bold mb-2"
+              className="text-4xl font-black tracking-tight mb-2"
               style={{ color: winner.color }}
             >
               {winner.name}
             </p>
-            <p className="text-2xl text-foreground">
+            <p className="text-2xl font-black text-foreground">
               {winner.reactionTime} {t("reaction.ms")}
             </p>
           </motion.div>
           
-          {/* All results */}
-          <div className="w-full max-w-sm space-y-2 mb-8">
+          {/* Scoreboard table */}
+          <div className="w-full max-w-sm space-y-3 mb-8 relative z-10">
             {[...players]
               .sort((a, b) => (a.reactionTime || Infinity) - (b.reactionTime || Infinity))
               .map((player, index) => (
                 <motion.div
                   key={player.id}
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: index * 0.1 }}
-                  className="flex items-center justify-between px-4 py-3 rounded-xl bg-card/60 border border-border/50"
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: index * 0.05 }}
+                  className="flex items-center justify-between px-5 py-4 rounded-[24px] bg-card border-2 border-border shadow-[0_12px_24px_rgba(0,0,0,0.01)]"
                 >
-                  <div className="flex items-center gap-3">
-                    <span className="text-lg font-bold text-muted-foreground">#{index + 1}</span>
-                    <span className="font-medium text-foreground">{player.name}</span>
+                  <div className="flex items-center gap-4">
+                    <span className="text-sm font-black text-muted-foreground/60">#{index + 1}</span>
+                    <span className="font-extrabold text-foreground text-sm">{player.name}</span>
                   </div>
                   <span 
-                    className="font-bold"
+                    className="font-black text-sm"
                     style={{ color: player.color }}
                   >
                     {player.reactionTime} {t("reaction.ms")}
@@ -303,14 +306,14 @@ export function ReactionTime() {
               ))}
           </div>
           
-          <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
+          {/* Reset Capsule Button */}
+          <button
             onClick={resetGame}
-            className="px-12 py-4 rounded-2xl bg-secondary text-foreground font-semibold text-lg"
+            className="relative z-10 w-full max-w-xs flex items-center justify-between px-8 py-5 rounded-full bg-foreground text-background font-black text-sm shadow-[0_12px_36px_rgba(0,0,0,0.15)] hover:bg-foreground/90 transition-all cursor-pointer"
           >
-            {t("game.reset")}
-          </motion.button>
+            <span>{t("game.reset")}</span>
+            <span className="tracking-widest opacity-80" dir="ltr"> &gt;&gt;&gt;</span>
+          </button>
         </motion.div>
       )}
     </div>

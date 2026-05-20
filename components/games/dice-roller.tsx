@@ -29,7 +29,7 @@ function Die({ value, rolling, delay = 0 }: { value: number; rolling: boolean; d
         rotateY: 0,
       }}
       transition={{
-        duration: rolling ? 1.5 : 0.3,
+        duration: rolling ? 1.5 : 0.4,
         delay: rolling ? delay : 0,
         ease: rolling ? "easeOut" : "easeInOut",
       }}
@@ -39,15 +39,15 @@ function Die({ value, rolling, delay = 0 }: { value: number; rolling: boolean; d
         perspective: "1000px",
       }}
     >
-      {/* 3D Dice face */}
+      {/* 3D Playful Dice face */}
       <div 
-        className="absolute inset-0 rounded-2xl bg-gradient-to-br from-white to-gray-100 shadow-xl"
+        className="absolute inset-0 rounded-[24px] bg-gradient-to-br from-white to-slate-100 border-4 border-white/80"
         style={{
-          boxShadow: "0 10px 30px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.5)",
+          boxShadow: "0 12px 28px rgba(0, 0, 0, 0.1), inset 0 2px 4px rgba(255, 255, 255, 0.9)",
         }}
       >
         {/* Dots grid */}
-        <div className="absolute inset-3 grid grid-cols-3 grid-rows-3">
+        <div className="absolute inset-3 grid grid-cols-3 grid-rows-3 pointer-events-none">
           {[0, 1, 2].map(row => (
             [0, 1, 2].map(col => {
               const hasDot = dots.some(([r, c]) => r === row && c === col)
@@ -58,9 +58,9 @@ function Die({ value, rolling, delay = 0 }: { value: number; rolling: boolean; d
                       initial={{ scale: 0 }}
                       animate={{ scale: 1 }}
                       transition={{ delay: rolling ? 1.5 + delay : 0, duration: 0.2 }}
-                      className="w-3 h-3 sm:w-4 sm:h-4 rounded-full bg-gray-800"
+                      className="w-3.5 h-3.5 sm:w-4.5 sm:h-4.5 rounded-full bg-primary"
                       style={{
-                        boxShadow: "inset 0 2px 4px rgba(0, 0, 0, 0.3)",
+                        boxShadow: "inset 0 2px 4px rgba(0, 0, 0, 0.2)",
                       }}
                     />
                   )}
@@ -110,23 +110,29 @@ export function DiceRoller() {
   const total = values.reduce((sum, v) => sum + v, 0)
 
   return (
-    <div className="h-full flex flex-col items-center justify-center p-6" dir={direction}>
+    <div className="h-full flex flex-col items-center justify-center p-6 bg-background select-none" dir={direction}>
+      
+      {/* Decorative Blob */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none opacity-40">
+        <div className="absolute top-1/4 right-1/4 w-72 h-72 rounded-full bg-blue-200/20 blur-3xl" />
+      </div>
+
       {/* Dice count selector */}
       <motion.div
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="mb-8"
+        className="mb-8 relative z-10 text-center"
       >
-        <p className="text-sm text-muted-foreground text-center mb-3">{t("dice.count")}</p>
-        <div className="flex items-center gap-2">
+        <p className="text-xs font-black uppercase text-muted-foreground tracking-wider mb-4">{t("dice.count")}</p>
+        <div className="flex items-center justify-center gap-3">
           {[1, 2, 3, 4].map(count => (
             <button
               key={count}
               onClick={() => handleDiceCountChange(count)}
-              className={`w-10 h-10 rounded-xl font-semibold transition-all ${
+              className={`w-12 h-12 rounded-full border-2 font-black text-sm transition-all cursor-pointer shadow-sm ${
                 diceCount === count
-                  ? "bg-primary text-primary-foreground scale-110"
-                  : "bg-secondary/50 text-foreground/70 hover:bg-secondary"
+                  ? "border-foreground bg-foreground text-background scale-110"
+                  : "border-border bg-card text-muted-foreground hover:bg-secondary/40"
               }`}
             >
               {count}
@@ -137,9 +143,9 @@ export function DiceRoller() {
 
       {/* Dice display */}
       <motion.div
-        initial={{ opacity: 0, scale: 0.8 }}
+        initial={{ opacity: 0, scale: 0.9 }}
         animate={{ opacity: 1, scale: 1 }}
-        className="flex flex-wrap items-center justify-center gap-4 mb-8"
+        className="flex flex-wrap items-center justify-center gap-6 mb-12 relative z-10 max-w-xs"
       >
         {values.map((value, index) => (
           <Die 
@@ -152,33 +158,33 @@ export function DiceRoller() {
       </motion.div>
 
       {/* Total */}
-      <AnimatePresence mode="wait">
-        {!rolling && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            className="mb-8 text-center"
-          >
-            <p className="text-sm text-muted-foreground">{t("dice.count") === "מספר קוביות" ? "סה״כ" : "Total"}</p>
-            <p className="text-5xl font-bold text-foreground">{total}</p>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      <div className="h-24 mb-6 flex items-center justify-center relative z-10">
+        <AnimatePresence mode="wait">
+          {!rolling && (
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              className="text-center"
+            >
+              <p className="text-xs font-black uppercase text-muted-foreground tracking-wider">
+                {t("dice.count") === "מספר קוביות" ? "סה״כ" : "Total"}
+              </p>
+              <p className="text-5xl font-black text-foreground mt-1 tracking-tight">{total}</p>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
 
-      {/* Roll button */}
-      <motion.button
-        whileHover={{ scale: 1.05 }}
-        whileTap={{ scale: 0.95 }}
+      {/* Roll button (Mockup capsule button) */}
+      <button
         onClick={rollDice}
         disabled={rolling}
-        className="px-12 py-4 rounded-2xl bg-gradient-to-r from-cyan-500 to-blue-600 text-white font-semibold text-lg shadow-lg disabled:opacity-50 transition-all"
-        style={{
-          boxShadow: "0 10px 40px rgba(6, 182, 212, 0.4)",
-        }}
+        className="relative z-10 w-full max-w-xs flex items-center justify-between px-8 py-5 rounded-full bg-foreground text-background font-black text-sm shadow-[0_12px_36px_rgba(0,0,0,0.15)] hover:bg-foreground/90 transition-all cursor-pointer disabled:opacity-50"
       >
-        {rolling ? t("dice.rolling") : t("dice.roll")}
-      </motion.button>
+        <span>{rolling ? t("dice.rolling") : t("dice.roll")}</span>
+        <span className="tracking-widest opacity-80" dir="ltr"> &gt;&gt;&gt;</span>
+      </button>
     </div>
   )
 }

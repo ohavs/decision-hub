@@ -17,8 +17,8 @@ const GAME_NAMES: Record<string, Record<GameType, string>> = {
     coinFlip: "מטבע",
     randomPicker: "בוחר אקראי",
     colorRoulette: "רולטה",
-    reactionTime: "תגובה",
-    drawStraws: "קשים",
+    reactionTime: "תגובה מהירה",
+    drawStraws: "שליפת קשים",
   },
   en: {
     fingerDice: "Finger Dice",
@@ -26,7 +26,7 @@ const GAME_NAMES: Record<string, Record<GameType, string>> = {
     coinFlip: "Coin Flip",
     randomPicker: "Random Picker",
     colorRoulette: "Color Roulette",
-    reactionTime: "Reaction",
+    reactionTime: "Reaction Time",
     drawStraws: "Draw Straws",
   },
 }
@@ -80,125 +80,117 @@ export function StatsCenter({ onBack }: StatsCenterProps) {
   }
 
   return (
-    <div className="fixed inset-0 bg-background overflow-hidden flex flex-col" dir={direction}>
-      {/* Background */}
-      <div className="absolute inset-0 overflow-hidden">
-        <div 
-          className="absolute w-[400px] h-[400px] rounded-full opacity-10 blur-3xl"
-          style={{
-            background: "radial-gradient(circle, rgba(168, 85, 247, 0.5) 0%, transparent 70%)",
-            top: "20%",
-            right: "-20%",
-          }}
-        />
+    <div className="fixed inset-0 bg-background overflow-hidden flex flex-col px-6 pt-8 pb-6" dir={direction}>
+      
+      {/* Decorative Background Blob Elements */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none opacity-50">
+        <div className="absolute top-[20%] right-[-10%] w-[350px] h-[350px] rounded-full bg-purple-200/20 blur-3xl" />
       </div>
 
       {/* Header */}
       <motion.header 
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="relative z-10 px-6 pt-8 pb-4"
+        className="relative z-10 flex items-center justify-between mb-6"
       >
-        <div className="flex items-center justify-between">
-          <button
-            onClick={() => {
-              playSound("click", soundEnabled)
-              onBack()
-            }}
-            className="p-2 -ml-2 rounded-full hover:bg-secondary/50 transition-colors"
+        <button
+          onClick={() => {
+            playSound("click", soundEnabled)
+            onBack()
+          }}
+          className="p-3 rounded-full bg-card border-2 border-border text-foreground hover:bg-secondary/40 shadow-md transition-all cursor-pointer animate-in fade-in"
+        >
+          <svg 
+            className={`w-5 h-5 text-foreground ${direction === "rtl" ? "rotate-180" : ""}`} 
+            fill="none" 
+            viewBox="0 0 24 24" 
+            stroke="currentColor"
           >
-            <svg 
-              className={`w-6 h-6 text-foreground ${direction === "rtl" ? "rotate-180" : ""}`} 
-              fill="none" 
-              viewBox="0 0 24 24" 
-              stroke="currentColor"
-            >
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-            </svg>
-          </button>
-          
-          <h1 className="text-xl font-bold text-foreground">{t("stats.title")}</h1>
-          
-          <button
-            onClick={() => {
-              playSound("click", soundEnabled)
-              setEditMode(!editMode)
-            }}
-            className={`px-3 py-1.5 rounded-full text-sm transition-colors ${
-              editMode 
-                ? "bg-primary text-primary-foreground" 
-                : "bg-secondary/50 text-foreground/70 hover:bg-secondary"
-            }`}
-          >
-            {t("stats.editMode")}
-          </button>
-        </div>
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M15 19l-7-7 7-7" />
+          </svg>
+        </button>
+        
+        <h1 className="text-2xl font-black tracking-tight text-foreground">{t("stats.title")}</h1>
+        
+        <button
+          onClick={() => {
+            playSound("click", soundEnabled)
+            setEditMode(!editMode)
+          }}
+          className={`px-5 py-2.5 rounded-full text-xs font-black transition-all border-2 cursor-pointer shadow-sm ${
+            editMode 
+              ? "bg-foreground text-background border-foreground" 
+              : "bg-card text-foreground border-border hover:bg-secondary/40"
+          }`}
+        >
+          {t("stats.editMode")}
+        </button>
       </motion.header>
 
-      {/* Content */}
-      <div className="flex-1 px-4 pb-8 overflow-y-auto">
-        {/* Most Played */}
+      {/* Content area */}
+      <div className="flex-1 overflow-y-auto scrollbar-none pb-20 pr-1 pl-1">
+        
+        {/* Most Played Card */}
         {mostPlayed && (
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 15 }}
             animate={{ opacity: 1, y: 0 }}
-            className="mb-6 p-4 rounded-2xl bg-card/60 backdrop-blur-xl border border-border/50"
+            className="mb-6 p-5 rounded-[32px] bg-card border-2 border-border shadow-[0_12px_36px_rgba(0,0,0,0.02)] flex flex-col gap-3"
           >
-            <h2 className="text-sm text-muted-foreground mb-2">{t("stats.mostPlayed")}</h2>
-            <div className="flex items-center gap-3">
-              <div className="w-12 h-12 rounded-xl bg-primary/20 flex items-center justify-center">
-                <span className="text-2xl">
-                  {mostPlayed.game === "fingerDice" && "👆"}
-                  {mostPlayed.game === "diceRoller" && "🎲"}
-                  {mostPlayed.game === "coinFlip" && "🪙"}
-                  {mostPlayed.game === "randomPicker" && "🎰"}
-                  {mostPlayed.game === "colorRoulette" && "🎨"}
-                  {mostPlayed.game === "reactionTime" && "⚡"}
-                  {mostPlayed.game === "drawStraws" && "🥢"}
-                </span>
+            <h2 className="text-xs font-black uppercase text-muted-foreground tracking-wider">{t("stats.mostPlayed")}</h2>
+            <div className="flex items-center gap-4">
+              <div className="w-14 h-14 rounded-[20px] bg-primary/10 border-2 border-primary/20 flex items-center justify-center text-3xl select-none">
+                {mostPlayed.game === "fingerDice" && "👆"}
+                {mostPlayed.game === "diceRoller" && "🎲"}
+                {mostPlayed.game === "coinFlip" && "🪙"}
+                {mostPlayed.game === "randomPicker" && "🎰"}
+                {mostPlayed.game === "colorRoulette" && "🎨"}
+                {mostPlayed.game === "reactionTime" && "⚡"}
+                {mostPlayed.game === "drawStraws" && "🥢"}
               </div>
               <div>
-                <p className="font-semibold text-foreground">
+                <p className="text-lg font-black text-foreground">
                   {GAME_NAMES[language][mostPlayed.game]}
                 </p>
-                <p className="text-sm text-muted-foreground">
-                  {mostPlayed.count} {language === "he" ? "משחקים" : "games"}
+                <p className="text-xs font-bold text-muted-foreground mt-0.5">
+                  {mostPlayed.count} {language === "he" ? "משחקים שוחקו" : "games played"}
                 </p>
               </div>
             </div>
           </motion.div>
         )}
 
-        {/* Players Table */}
+        {/* Players Scoreboard Table */}
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: 15 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
           className="mb-6"
         >
-          <h2 className="text-lg font-semibold text-foreground mb-3">{t("stats.player")}</h2>
+          <h2 className="text-lg font-black tracking-tight text-foreground mb-3">{t("stats.player")}</h2>
           
           {players.length === 0 ? (
-            <div className="p-8 rounded-2xl bg-card/60 backdrop-blur-xl border border-border/50 text-center">
-              <p className="text-muted-foreground">{t("stats.noData")}</p>
+            <div className="p-8 rounded-[32px] bg-card border-2 border-border shadow-[0_12px_36px_rgba(0,0,0,0.02)] text-center">
+              <span className="text-3xl block mb-2 select-none">📊</span>
+              <p className="text-sm font-bold text-muted-foreground">{t("stats.noData")}</p>
             </div>
           ) : (
-            <div className="rounded-2xl bg-card/60 backdrop-blur-xl border border-border/50 overflow-hidden">
+            <div className="rounded-[32px] bg-card border-2 border-border shadow-[0_12px_36px_rgba(0,0,0,0.02)] overflow-hidden">
               <table className="w-full">
                 <thead>
-                  <tr className="border-b border-border/50">
-                    <th className="px-4 py-3 text-start text-xs font-medium text-muted-foreground uppercase">
+                  <tr className="border-b-2 border-border/80 bg-secondary/10">
+                    <th className="px-5 py-4 text-start text-xs font-black text-muted-foreground uppercase tracking-wider">
                       {t("stats.player")}
                     </th>
-                    <th className="px-4 py-3 text-center text-xs font-medium text-muted-foreground uppercase">
+                    <th className="px-5 py-4 text-center text-xs font-black text-muted-foreground uppercase tracking-wider">
                       {t("stats.wins")}
                     </th>
-                    <th className="px-4 py-3 text-center text-xs font-medium text-muted-foreground uppercase">
+                    <th className="px-5 py-4 text-center text-xs font-black text-muted-foreground uppercase tracking-wider">
                       {t("stats.winRate")}
                     </th>
                   </tr>
                 </thead>
-                <tbody>
+                <tbody className="divide-y divide-border/60">
                   {players.map((player, index) => {
                     const totalWins = getTotalWins(player.wins)
                     const totalGames = getTotalGames(player.gamesPlayed)
@@ -207,12 +199,11 @@ export function StatsCenter({ onBack }: StatsCenterProps) {
                     return (
                       <motion.tr 
                         key={player.name}
-                        initial={{ opacity: 0, x: direction === "rtl" ? 20 : -20 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        transition={{ delay: index * 0.05 }}
-                        className="border-b border-border/30 last:border-0"
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: index * 0.04 }}
                       >
-                        <td className="px-4 py-3">
+                        <td className="px-5 py-4">
                           {editMode && editingPlayer === player.name ? (
                             <input
                               type="text"
@@ -221,7 +212,7 @@ export function StatsCenter({ onBack }: StatsCenterProps) {
                               onBlur={() => handleEditPlayer(player.name)}
                               onKeyDown={(e) => e.key === "Enter" && handleEditPlayer(player.name)}
                               autoFocus
-                              className="w-full px-2 py-1 bg-secondary rounded text-foreground text-sm"
+                              className="w-full px-3 py-1.5 border-2 border-foreground bg-background rounded-full text-foreground text-xs font-bold focus:outline-none"
                             />
                           ) : (
                             <button
@@ -231,21 +222,23 @@ export function StatsCenter({ onBack }: StatsCenterProps) {
                                   setNewName(player.name)
                                 }
                               }}
-                              className={`text-sm font-medium text-foreground ${
-                                editMode ? "cursor-pointer hover:text-primary" : "cursor-default"
+                              className={`text-sm font-black text-foreground ${
+                                editMode ? "cursor-pointer text-primary underline underline-offset-4 decoration-2" : "cursor-default"
                               }`}
                             >
                               {player.name}
                             </button>
                           )}
                         </td>
-                        <td className="px-4 py-3 text-center">
-                          <span className="text-sm font-semibold text-foreground">{totalWins}</span>
-                          <span className="text-xs text-muted-foreground">/{totalGames}</span>
+                        <td className="px-5 py-4 text-center">
+                          <span className="text-sm font-black text-foreground">{totalWins}</span>
+                          <span className="text-xs font-bold text-muted-foreground">/{totalGames}</span>
                         </td>
-                        <td className="px-4 py-3 text-center">
-                          <span className={`text-sm font-semibold ${
-                            winRate >= 50 ? "text-emerald-500" : "text-muted-foreground"
+                        <td className="px-5 py-4 text-center">
+                          <span className={`text-xs font-black px-2.5 py-1 rounded-full ${
+                            winRate >= 50 
+                              ? "bg-emerald-100 text-emerald-700" 
+                              : "bg-slate-100 text-slate-500"
                           }`}>
                             {winRate}%
                           </span>
@@ -259,30 +252,30 @@ export function StatsCenter({ onBack }: StatsCenterProps) {
           )}
         </motion.div>
 
-        {/* Recent Games */}
+        {/* Recent Games Feed */}
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: 15 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
           className="mb-6"
         >
-          <h2 className="text-lg font-semibold text-foreground mb-3">{t("stats.recentGames")}</h2>
+          <h2 className="text-lg font-black tracking-tight text-foreground mb-3">{t("stats.recentGames")}</h2>
           
           {recentGames.length === 0 ? (
-            <div className="p-8 rounded-2xl bg-card/60 backdrop-blur-xl border border-border/50 text-center">
-              <p className="text-muted-foreground">{t("stats.noData")}</p>
+            <div className="p-8 rounded-[32px] bg-card border-2 border-border shadow-[0_12px_36px_rgba(0,0,0,0.02)] text-center">
+              <p className="text-sm font-bold text-muted-foreground">{t("stats.noData")}</p>
             </div>
           ) : (
-            <div className="space-y-2">
+            <div className="space-y-3">
               {recentGames.map((game, index) => (
                 <motion.div
                   key={game.id}
-                  initial={{ opacity: 0, x: direction === "rtl" ? 20 : -20 }}
-                  animate={{ opacity: 1, x: 0 }}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: index * 0.03 }}
-                  className="p-3 rounded-xl bg-card/40 backdrop-blur border border-border/30 flex items-center gap-3"
+                  className="p-4 rounded-[24px] bg-card border-2 border-border shadow-[0_12px_36px_rgba(0,0,0,0.015)] flex items-center gap-4"
                 >
-                  <div className="w-10 h-10 rounded-lg bg-secondary/50 flex items-center justify-center text-lg">
+                  <div className="w-12 h-12 rounded-[16px] bg-secondary/50 flex items-center justify-center text-2xl select-none">
                     {game.gameType === "fingerDice" && "👆"}
                     {game.gameType === "diceRoller" && "🎲"}
                     {game.gameType === "coinFlip" && "🪙"}
@@ -292,14 +285,14 @@ export function StatsCenter({ onBack }: StatsCenterProps) {
                     {game.gameType === "drawStraws" && "🥢"}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-foreground truncate">
+                    <p className="text-sm font-black text-foreground truncate">
                       {game.winner}
                     </p>
-                    <p className="text-xs text-muted-foreground">
+                    <p className="text-xs font-bold text-muted-foreground mt-0.5">
                       {GAME_NAMES[language][game.gameType]}
                     </p>
                   </div>
-                  <div className="text-xs text-muted-foreground">
+                  <div className="text-[10px] font-black text-muted-foreground/60 uppercase">
                     {new Date(game.timestamp).toLocaleDateString(language === "he" ? "he-IL" : "en-US")}
                   </div>
                 </motion.div>
@@ -308,7 +301,7 @@ export function StatsCenter({ onBack }: StatsCenterProps) {
           )}
         </motion.div>
 
-        {/* Reset Button */}
+        {/* Danger Zone / Reset Statistics */}
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -322,21 +315,23 @@ export function StatsCenter({ onBack }: StatsCenterProps) {
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.95 }}
-                className="flex items-center justify-center gap-3"
+                className="p-5 rounded-[28px] border-2 border-destructive bg-destructive/5 text-center flex flex-col items-center gap-4"
               >
-                <span className="text-sm text-muted-foreground">{t("stats.confirmReset")}</span>
-                <button
-                  onClick={handleReset}
-                  className="px-4 py-2 rounded-full bg-destructive text-destructive-foreground text-sm font-medium"
-                >
-                  {language === "he" ? "כן, אפס" : "Yes, Reset"}
-                </button>
-                <button
-                  onClick={() => setShowResetConfirm(false)}
-                  className="px-4 py-2 rounded-full bg-secondary text-secondary-foreground text-sm"
-                >
-                  {language === "he" ? "ביטול" : "Cancel"}
-                </button>
+                <p className="text-sm font-black text-destructive">{t("stats.confirmReset")}</p>
+                <div className="flex items-center gap-3">
+                  <button
+                    onClick={handleReset}
+                    className="px-5 py-2.5 rounded-full bg-destructive text-white text-xs font-black shadow-md cursor-pointer hover:bg-destructive/90 transition-colors"
+                  >
+                    {language === "he" ? "כן, למחוק הכל" : "Yes, Reset All"}
+                  </button>
+                  <button
+                    onClick={() => setShowResetConfirm(false)}
+                    className="px-5 py-2.5 rounded-full bg-card border-2 border-border text-foreground text-xs font-black shadow-sm cursor-pointer hover:bg-secondary/40 transition-colors"
+                  >
+                    {language === "he" ? "ביטול" : "Cancel"}
+                  </button>
+                </div>
               </motion.div>
             ) : (
               <motion.button
@@ -345,7 +340,7 @@ export function StatsCenter({ onBack }: StatsCenterProps) {
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
                 onClick={() => setShowResetConfirm(true)}
-                className="w-full py-3 rounded-xl bg-destructive/10 border border-destructive/20 text-destructive text-sm font-medium hover:bg-destructive/20 transition-colors"
+                className="w-full py-4 rounded-full border-2 border-destructive/30 bg-destructive/5 text-destructive text-sm font-black hover:bg-destructive/10 transition-all cursor-pointer"
               >
                 {t("stats.reset")}
               </motion.button>

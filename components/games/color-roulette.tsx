@@ -7,14 +7,14 @@ import { useStats } from "@/lib/stats-store"
 import { playSound } from "@/lib/sounds"
 
 const COLORS = [
-  { name: "Red", hex: "#ef4444", glow: "rgba(239, 68, 68, 0.6)" },
-  { name: "Blue", hex: "#3b82f6", glow: "rgba(59, 130, 246, 0.6)" },
-  { name: "Green", hex: "#22c55e", glow: "rgba(34, 197, 94, 0.6)" },
-  { name: "Yellow", hex: "#eab308", glow: "rgba(234, 179, 8, 0.6)" },
-  { name: "Purple", hex: "#a855f7", glow: "rgba(168, 85, 247, 0.6)" },
-  { name: "Pink", hex: "#ec4899", glow: "rgba(236, 72, 153, 0.6)" },
-  { name: "Orange", hex: "#f97316", glow: "rgba(249, 115, 22, 0.6)" },
-  { name: "Cyan", hex: "#06b6d4", glow: "rgba(6, 182, 212, 0.6)" },
+  { name: "Red", hex: "#f43f5e", glow: "rgba(244, 63, 94, 0.25)" },
+  { name: "Blue", hex: "#3b82f6", glow: "rgba(59, 130, 246, 0.25)" },
+  { name: "Green", hex: "#10b981", glow: "rgba(16, 185, 129, 0.25)" },
+  { name: "Yellow", hex: "#eab308", glow: "rgba(234, 179, 8, 0.25)" },
+  { name: "Purple", hex: "#8b5cf6", glow: "rgba(139, 92, 246, 0.25)" },
+  { name: "Pink", hex: "#ec4899", glow: "rgba(236, 72, 153, 0.25)" },
+  { name: "Orange", hex: "#f97316", glow: "rgba(249, 115, 22, 0.25)" },
+  { name: "Cyan", hex: "#06b6d4", glow: "rgba(6, 182, 212, 0.25)" },
 ]
 
 interface Player {
@@ -62,7 +62,6 @@ export function ColorRoulette() {
     setWinner(null)
     playSound("spin", soundEnabled)
     
-    // Get container bounds
     const container = containerRef.current
     if (!container) return
     
@@ -71,7 +70,6 @@ export function ColorRoulette() {
     const centerY = rect.height / 2
     const radius = Math.min(rect.width, rect.height) * 0.35
     
-    // Animate orb bouncing between players
     let bounceCount = 0
     const totalBounces = 15 + Math.floor(Math.random() * 10)
     const winnerIndex = Math.floor(Math.random() * players.length)
@@ -106,25 +104,30 @@ export function ColorRoulette() {
   }
 
   return (
-    <div className="h-full flex flex-col p-6 pt-16" dir={direction}>
-      {/* Players display */}
+    <div className="h-full flex flex-col p-6 pt-20 bg-background select-none" dir={direction}>
+      
+      {/* Decorative Blob */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none opacity-40">
+        <div className="absolute top-1/4 left-1/4 w-72 h-72 rounded-full bg-emerald-200/20 blur-3xl" />
+      </div>
+
+      {/* Players display wheel */}
       <div 
         ref={containerRef}
-        className="flex-1 relative flex items-center justify-center"
+        className="flex-1 relative flex items-center justify-center min-h-0"
       >
         {/* Player circles arranged in a ring */}
         {players.map((player, index) => {
           const angle = (index / players.length) * Math.PI * 2 - Math.PI / 2
-          const radius = Math.min(window.innerWidth, window.innerHeight) * 0.28
-          const x = 50 + Math.cos(angle) * 35
-          const y = 50 + Math.sin(angle) * 35
+          const x = 50 + Math.cos(angle) * 36
+          const y = 50 + Math.sin(angle) * 36
           
           return (
             <motion.div
               key={player.id}
               initial={{ scale: 0, opacity: 0 }}
               animate={{ 
-                scale: winner?.id === player.id ? 1.3 : 1, 
+                scale: winner?.id === player.id ? 1.25 : 1, 
                 opacity: 1 
               }}
               className="absolute"
@@ -138,42 +141,41 @@ export function ColorRoulette() {
                 animate={winner?.id === player.id ? {
                   boxShadow: [
                     `0 0 20px ${player.color.glow}`,
-                    `0 0 60px ${player.color.glow}`,
+                    `0 0 50px ${player.color.glow}`,
                     `0 0 20px ${player.color.glow}`,
                   ],
                 } : {}}
                 transition={{ duration: 0.5, repeat: winner?.id === player.id ? Infinity : 0 }}
-                className="w-16 h-16 sm:w-20 sm:h-20 rounded-full flex items-center justify-center cursor-pointer"
+                className="w-16 h-16 sm:w-20 sm:h-20 rounded-full flex items-center justify-center cursor-pointer border-4 border-white shadow-lg transition-transform hover:scale-105"
                 style={{
                   backgroundColor: player.color.hex,
-                  boxShadow: `0 0 20px ${player.color.glow}`,
                 }}
                 onClick={() => !spinning && removePlayer(player.id)}
               >
-                <span className="text-white font-bold text-xs sm:text-sm text-center px-1">
-                  {player.name.length > 8 ? player.name.slice(0, 6) + "..." : player.name}
+                <span className="text-white font-black text-xs sm:text-sm text-center px-1 truncate max-w-full">
+                  {player.name.split(" ")[1] || player.name}
                 </span>
               </motion.div>
             </motion.div>
           )
         })}
 
-        {/* Bouncing orb */}
+        {/* Bouncing selector orb */}
         <AnimatePresence>
           {orbPosition && (
             <motion.div
               initial={{ scale: 0 }}
               animate={{ 
-                x: orbPosition.x - 24,
-                y: orbPosition.y - 24,
+                x: orbPosition.x - 20,
+                y: orbPosition.y - 20,
                 scale: 1,
               }}
               exit={{ scale: 0 }}
-              transition={{ type: "spring", stiffness: 300, damping: 20 }}
-              className="absolute top-0 left-0 w-12 h-12 rounded-full"
+              transition={{ type: "spring", stiffness: 350, damping: 22 }}
+              className="absolute top-0 left-0 w-10 h-10 rounded-full border-4 border-white shadow-[0_4px_15px_rgba(0,0,0,0.15)]"
               style={{
-                background: "radial-gradient(circle at 30% 30%, white, #ccc)",
-                boxShadow: "0 0 30px white, 0 0 60px white",
+                background: "radial-gradient(circle at 35% 35%, white, #cbd5e1)",
+                boxShadow: "0 0 24px white, 0 0 40px white",
               }}
             />
           )}
@@ -184,10 +186,10 @@ export function ColorRoulette() {
           <motion.button
             initial={{ scale: 0 }}
             animate={{ scale: 1 }}
-            whileHover={{ scale: 1.1 }}
-            whileTap={{ scale: 0.9 }}
+            whileHover={{ scale: 1.08 }}
+            whileTap={{ scale: 0.94 }}
             onClick={addPlayer}
-            className="absolute w-16 h-16 rounded-full bg-card/80 backdrop-blur border border-border/50 flex items-center justify-center text-2xl text-foreground/70 hover:text-foreground transition-colors"
+            className="absolute w-14 h-14 rounded-full bg-card border-2 border-border shadow-[0_8px_24px_rgba(0,0,0,0.05)] flex items-center justify-center text-3xl font-black text-foreground hover:bg-secondary/40 transition-colors cursor-pointer"
             style={{
               left: "50%",
               top: "50%",
@@ -203,7 +205,7 @@ export function ColorRoulette() {
           <motion.p
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            className="text-muted-foreground text-center"
+            className="text-sm font-bold text-muted-foreground text-center"
           >
             {t("roulette.addPlayer")}
           </motion.p>
@@ -211,53 +213,42 @@ export function ColorRoulette() {
       </div>
 
       {/* Winner announcement */}
-      <AnimatePresence>
-        {winner && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0 }}
-            className="text-center mb-6"
-          >
-            <p className="text-sm text-muted-foreground">{t("game.winner")}</p>
-            <p 
-              className="text-3xl font-bold"
-              style={{ color: winner.color.hex }}
+      <div className="h-20 mb-6 flex items-center justify-center relative z-10">
+        <AnimatePresence>
+          {winner && (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.8, y: 15 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0 }}
+              className="text-center"
             >
-              {winner.name}
-            </p>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* Action buttons */}
-      <div className="flex gap-3">
-        {winner ? (
-          <motion.button
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            whileHover={{ scale: 1.03 }}
-            whileTap={{ scale: 0.97 }}
-            onClick={resetGame}
-            className="flex-1 py-4 rounded-2xl bg-secondary text-foreground font-semibold text-lg"
-          >
-            {t("game.reset")}
-          </motion.button>
-        ) : (
-          <motion.button
-            whileHover={{ scale: 1.03 }}
-            whileTap={{ scale: 0.97 }}
-            onClick={spin}
-            disabled={spinning || players.length < 2}
-            className="flex-1 py-4 rounded-2xl bg-gradient-to-r from-emerald-500 to-teal-600 text-white font-semibold text-lg shadow-lg disabled:opacity-50 transition-all"
-            style={{
-              boxShadow: "0 10px 40px rgba(16, 185, 129, 0.4)",
-            }}
-          >
-            {spinning ? t("roulette.spinning") : t("roulette.spin")}
-          </motion.button>
-        )}
+              <p className="text-xs font-black uppercase text-muted-foreground tracking-wider mb-1">{t("game.winner")}</p>
+              <p 
+                className="text-3xl font-black tracking-tight"
+                style={{ color: winner.color.hex }}
+              >
+                {winner.name}
+              </p>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
+
+      {/* Spin Capsule Button */}
+      <button
+        onClick={winner ? resetGame : spin}
+        disabled={!winner && (spinning || players.length < 2)}
+        className="relative z-10 w-full flex items-center justify-between px-8 py-5 rounded-full bg-foreground text-background font-black text-sm shadow-[0_12px_36px_rgba(0,0,0,0.15)] hover:bg-foreground/90 transition-all cursor-pointer disabled:opacity-50"
+      >
+        <span>
+          {winner 
+            ? t("game.reset") 
+            : spinning 
+              ? t("roulette.spinning") 
+              : t("roulette.spin")}
+        </span>
+        <span className="tracking-widest opacity-80" dir="ltr"> &gt;&gt;&gt;</span>
+      </button>
     </div>
   )
 }

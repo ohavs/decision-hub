@@ -25,7 +25,6 @@ export function DrawStraws() {
   const [revealAll, setRevealAll] = useState(false)
 
   const startGame = useCallback(() => {
-    // Create straws with one random short one
     const shortIndex = Math.floor(Math.random() * playerCount)
     const newStraws: Straw[] = Array.from({ length: playerCount }, (_, i) => ({
       id: i,
@@ -69,7 +68,6 @@ export function DrawStraws() {
         setRevealAll(true)
         playSound("lose", soundEnabled)
         
-        // Record winner (everyone except the loser)
         const participants = Array.from({ length: playerCount }, (_, i) => 
           `${language === "he" ? "שחקן" : "Player"} ${i + 1}`
         )
@@ -80,7 +78,6 @@ export function DrawStraws() {
         }
       }, 500)
     } else {
-      // Continue to next player
       if (currentPlayer < playerCount) {
         setCurrentPlayer(prev => prev + 1)
       }
@@ -99,7 +96,8 @@ export function DrawStraws() {
   const availableStraws = straws.filter(s => !s.pulled)
 
   return (
-    <div className="h-full flex flex-col p-6 pt-16" dir={direction}>
+    <div className="h-full flex flex-col p-6 pt-20 bg-background select-none" dir={direction}>
+      
       {/* Setup phase */}
       {!gameStarted && (
         <motion.div
@@ -107,22 +105,27 @@ export function DrawStraws() {
           animate={{ opacity: 1 }}
           className="flex-1 flex flex-col items-center justify-center"
         >
-          <h2 className="text-xl font-semibold text-foreground mb-6">
+          {/* Decorative Blob */}
+          <div className="absolute inset-0 overflow-hidden pointer-events-none opacity-40">
+            <div className="absolute bottom-1/4 left-1/4 w-72 h-72 rounded-full bg-lime-200/20 blur-3xl" />
+          </div>
+
+          <h2 className="text-xs font-black uppercase text-muted-foreground tracking-wider mb-6">
             {t("straws.players")}
           </h2>
           
-          <div className="flex items-center gap-3 mb-8">
-            {[2, 3, 4, 5, 6].map(count => (
+          <div className="flex items-center justify-center gap-3 mb-10 relative z-10">
+            {[2, 3, 4, 5, 6, 7, 8].map(count => (
               <button
                 key={count}
                 onClick={() => {
                   setPlayerCount(count)
                   playSound("click", soundEnabled)
                 }}
-                className={`w-12 h-12 rounded-xl font-semibold transition-all ${
+                className={`w-12 h-12 rounded-full border-2 font-black text-sm transition-all cursor-pointer shadow-sm ${
                   playerCount === count
-                    ? "bg-primary text-primary-foreground scale-110"
-                    : "bg-secondary/50 text-foreground/70 hover:bg-secondary"
+                    ? "border-foreground bg-foreground text-background scale-110"
+                    : "border-border bg-card text-muted-foreground hover:bg-secondary/40"
                 }`}
               >
                 {count}
@@ -130,17 +133,14 @@ export function DrawStraws() {
             ))}
           </div>
           
-          <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
+          {/* Start Game capsule button */}
+          <button
             onClick={startGame}
-            className="px-12 py-4 rounded-2xl bg-gradient-to-r from-lime-500 to-green-600 text-white font-semibold text-lg shadow-lg"
-            style={{
-              boxShadow: "0 10px 40px rgba(132, 204, 22, 0.4)",
-            }}
+            className="relative z-10 w-full max-w-xs flex items-center justify-between px-8 py-5 rounded-full bg-foreground text-background font-black text-sm shadow-[0_12px_36px_rgba(0,0,0,0.15)] hover:bg-foreground/90 transition-all cursor-pointer"
           >
-            {t("game.start")}
-          </motion.button>
+            <span>{t("game.start")}</span>
+            <span className="tracking-widest opacity-80" dir="ltr"> &gt;&gt;&gt;</span>
+          </button>
         </motion.div>
       )}
 
@@ -152,47 +152,42 @@ export function DrawStraws() {
           className="flex-1 flex flex-col"
         >
           {/* Current player indicator */}
-          <div className="text-center mb-8">
-            <p className="text-muted-foreground text-sm mb-1">{t("straws.pull")}</p>
-            <p className="text-2xl font-bold text-foreground">
+          <div className="text-center mb-6 relative z-10">
+            <p className="text-xs font-black uppercase text-muted-foreground tracking-wider mb-1">{t("straws.pull")}</p>
+            <p className="text-2xl font-black text-foreground">
               {language === "he" ? "שחקן" : "Player"} {currentPlayer}
             </p>
           </div>
 
-          {/* Straws container - visual hand holding straws */}
-          <div className="flex-1 flex items-center justify-center">
+          {/* Straws cup container */}
+          <div className="flex-1 flex flex-col items-center justify-end mb-10 relative z-10">
             <div className="relative">
-              {/* Hand visual */}
-              <div 
-                className="absolute bottom-0 left-1/2 -translate-x-1/2 w-48 h-24 rounded-t-full"
-                style={{
-                  background: "linear-gradient(to top, #fbbf24, #d97706)",
-                  boxShadow: "inset 0 -10px 20px rgba(0,0,0,0.2)",
-                }}
-              />
               
               {/* Straws */}
-              <div className="relative flex items-end justify-center gap-4 mb-20">
+              <div className="relative flex items-end justify-center gap-3 mb-10">
                 <AnimatePresence>
                   {availableStraws.map((straw, index) => (
                     <motion.button
                       key={straw.id}
-                      initial={{ y: -100, opacity: 0 }}
+                      initial={{ y: -120, opacity: 0 }}
                       animate={{ y: 0, opacity: 1 }}
-                      exit={{ y: -200, opacity: 0, scale: 0.8 }}
-                      transition={{ delay: index * 0.1 }}
+                      exit={{ y: -300, opacity: 0, scale: 0.8 }}
+                      transition={{ delay: index * 0.05 }}
                       onClick={() => pullStraw(straw.id)}
-                      className="relative w-4 sm:w-5 rounded-full cursor-pointer hover:scale-105 transition-transform"
+                      className="relative w-4 rounded-full cursor-pointer transition-all border border-black/10 origin-bottom"
                       style={{
-                        height: "180px",
-                        background: "linear-gradient(to right, #fef3c7, #fcd34d, #fef3c7)",
-                        boxShadow: "2px 0 4px rgba(0,0,0,0.1), -2px 0 4px rgba(0,0,0,0.1)",
+                        height: "190px",
+                        background: "linear-gradient(to right, #fef3c7, #fde68a, #fcd34d)",
+                        boxShadow: "2px 4px 10px rgba(0,0,0,0.06)",
                       }}
-                      whileHover={{ y: -20 }}
+                      whileHover={{ y: -25, scale: 1.05 }}
                     >
-                      {/* Straw top */}
+                      {/* Straw stripe element */}
+                      <div className="absolute top-4 bottom-4 left-1.5 w-0.5 bg-primary/20 rounded-full" />
+                      
+                      {/* Straw top rim */}
                       <div 
-                        className="absolute -top-2 left-1/2 -translate-x-1/2 w-5 sm:w-6 h-4 rounded-full"
+                        className="absolute -top-1.5 left-1/2 -translate-x-1/2 w-5 h-3 rounded-full border border-black/10"
                         style={{
                           background: "linear-gradient(to right, #fcd34d, #f59e0b, #fcd34d)",
                         }}
@@ -201,25 +196,33 @@ export function DrawStraws() {
                   ))}
                 </AnimatePresence>
               </div>
+
+              {/* Hand held cup holder visual (modern style) */}
+              <div 
+                className="w-44 h-24 rounded-t-[28px] border-t-4 border-x-4 border-foreground bg-background"
+                style={{
+                  boxShadow: "inset 0 10px 20px rgba(0,0,0,0.02), 0 -8px 24px rgba(0,0,0,0.03)",
+                }}
+              />
             </div>
           </div>
 
-          {/* Pulled straws */}
+          {/* Pulled long straws scoreboard */}
           {straws.filter(s => s.pulled && !s.isShort).length > 0 && (
-            <div className="mb-6">
-              <p className="text-sm text-muted-foreground text-center mb-2">
-                {language === "he" ? "קשים ארוכים" : "Long Straws"}
+            <div className="mb-4 bg-card border-2 border-border p-4 rounded-[32px] shadow-sm max-w-sm mx-auto w-full">
+              <p className="text-[10px] font-black uppercase text-muted-foreground tracking-wider text-center mb-3">
+                {language === "he" ? "קשים ארוכים שנמשכו" : "Long Straws Pulled"}
               </p>
-              <div className="flex justify-center gap-2">
+              <div className="flex flex-wrap justify-center gap-4">
                 {straws.filter(s => s.pulled && !s.isShort).map(straw => (
-                  <div key={straw.id} className="text-center">
+                  <div key={straw.id} className="text-center flex flex-col items-center">
                     <div 
-                      className="w-3 h-24 rounded-full mx-auto mb-1"
+                      className="w-2.5 h-16 rounded-full mb-1.5 border border-emerald-300"
                       style={{
-                        background: "linear-gradient(to right, #86efac, #22c55e, #86efac)",
+                        background: "linear-gradient(to right, #86efac, #10b981, #059669)",
                       }}
                     />
-                    <p className="text-xs text-muted-foreground">{straw.pulledBy}</p>
+                    <p className="text-[10px] font-black text-foreground">{straw.pulledBy?.split(" ")[1]}</p>
                   </div>
                 ))}
               </div>
@@ -233,70 +236,71 @@ export function DrawStraws() {
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          className="flex-1 flex flex-col items-center justify-center"
+          className="flex-1 flex flex-col items-center justify-center p-6 pt-20"
         >
+          {/* Decorative Blob */}
+          <div className="absolute inset-0 overflow-hidden pointer-events-none opacity-40">
+            <div className="absolute top-1/4 right-1/4 w-72 h-72 rounded-full bg-red-200/20 blur-3xl" />
+          </div>
+
           <motion.div
-            initial={{ scale: 0 }}
+            initial={{ scale: 0.8 }}
             animate={{ scale: 1 }}
-            transition={{ type: "spring", stiffness: 200 }}
-            className="text-center mb-8"
+            transition={{ type: "spring", stiffness: 350, damping: 22 }}
+            className="text-center mb-8 relative z-10"
           >
-            <p className="text-muted-foreground mb-2">{t("straws.short")}</p>
-            <p className="text-4xl font-bold text-red-500 mb-4">
+            <p className="text-xs font-black uppercase text-muted-foreground tracking-wider mb-2">{t("straws.short")}</p>
+            <p className="text-4xl font-black text-red-500 mb-6">
               {language === "he" ? "שחקן" : "Player"} {loser}
             </p>
             
-            {/* Visual of short straw */}
+            {/* Visual short straw */}
             <motion.div
               initial={{ scaleY: 0 }}
               animate={{ scaleY: 1 }}
-              className="w-6 h-16 rounded-full mx-auto"
+              className="w-5 h-16 rounded-full mx-auto border-2 border-red-500 shadow-[0_8px_24px_rgba(239,68,68,0.4)]"
               style={{
-                background: "linear-gradient(to right, #fca5a5, #ef4444, #fca5a5)",
-                boxShadow: "0 0 20px rgba(239, 68, 68, 0.5)",
+                background: "linear-gradient(to right, #fecaca, #f87171, #ef4444)",
               }}
             />
           </motion.div>
           
-          {/* All straws revealed */}
+          {/* All straws reveal list */}
           {revealAll && (
             <motion.div
-              initial={{ opacity: 0, y: 20 }}
+              initial={{ opacity: 0, y: 15 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.3 }}
-              className="flex justify-center gap-4 mb-8"
+              transition={{ delay: 0.2 }}
+              className="flex justify-center gap-4 mb-10 bg-card border-2 border-border p-5 rounded-[32px] shadow-sm max-w-sm w-full"
             >
               {straws.map((straw) => (
-                <div key={straw.id} className="text-center">
+                <div key={straw.id} className="text-center flex flex-col items-center">
                   <div 
-                    className={`w-4 rounded-full mx-auto mb-2 ${
-                      straw.isShort ? "h-12" : "h-20"
+                    className={`w-3.5 rounded-full mb-2 border ${
+                      straw.isShort ? "h-10 border-red-400" : "h-20 border-emerald-400"
                     }`}
                     style={{
                       background: straw.isShort
-                        ? "linear-gradient(to right, #fca5a5, #ef4444, #fca5a5)"
-                        : "linear-gradient(to right, #86efac, #22c55e, #86efac)",
+                        ? "linear-gradient(to right, #fca5a5, #ef4444, #dc2626)"
+                        : "linear-gradient(to right, #a7f3d0, #10b981, #059669)",
                     }}
                   />
-                  <p className="text-xs text-muted-foreground">
-                    {straw.pulledBy || "-"}
+                  <p className="text-[10px] font-black text-muted-foreground">
+                    {straw.pulledBy ? straw.pulledBy.split(" ")[1] : "-"}
                   </p>
                 </div>
               ))}
             </motion.div>
           )}
           
-          <motion.button
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.5 }}
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
+          {/* Reset Capsule Button */}
+          <button
             onClick={resetGame}
-            className="px-12 py-4 rounded-2xl bg-secondary text-foreground font-semibold text-lg"
+            className="relative z-10 w-full max-w-xs flex items-center justify-between px-8 py-5 rounded-full bg-foreground text-background font-black text-sm shadow-[0_12px_36px_rgba(0,0,0,0.15)] hover:bg-foreground/90 transition-all cursor-pointer"
           >
-            {t("game.reset")}
-          </motion.button>
+            <span>{t("game.reset")}</span>
+            <span className="tracking-widest opacity-80" dir="ltr"> &gt;&gt;&gt;</span>
+          </button>
         </motion.div>
       )}
     </div>
