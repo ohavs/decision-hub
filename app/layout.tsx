@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from 'next'
 import { Geist, Geist_Mono, Assistant } from 'next/font/google'
 import { Analytics } from '@vercel/analytics/next'
+import { PWARegister } from '@/components/pwa-register'
 import './globals.css'
 
 const _geist = Geist({ subsets: ["latin"] });
@@ -19,6 +20,7 @@ export const metadata: Metadata = {
   title: 'Decision Hub - Ultimate Group Games',
   description: 'A comprehensive multi-game decision hub for groups with finger dice, coin flip, dice roller, and more',
   generator: 'v0.app',
+  manifest: '/manifest.json',
   icons: {
     icon: [
       {
@@ -46,6 +48,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className="font-sans antialiased">
+        <PWARegister />
         {children}
         <Analytics />
       </body>
