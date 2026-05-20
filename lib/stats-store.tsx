@@ -39,6 +39,8 @@ interface StatsContextType {
   getMostPlayedGame: () => { game: GameType; count: number } | null
   getRecentGames: (count?: number) => GameResult[]
   updatePlayerName: (oldName: string, newName: string) => void
+  deletePlayer: (name: string) => void
+  addPlayer: (name: string) => void
   resetStats: () => void
   soundEnabled: boolean
   setSoundEnabled: (enabled: boolean) => void
@@ -209,6 +211,47 @@ export function StatsProvider({ children }: { children: ReactNode }) {
     })
   }, [])
 
+  const deletePlayer = useCallback((name: string) => {
+    setStats(prev => {
+      const key = name.trim().toLowerCase()
+      if (!prev.players[key]) return prev
+
+      const newPlayers = { ...prev.players }
+      delete newPlayers[key]
+
+      const newHistory = prev.gameHistory.filter(game =>
+        !game.participants.some(p => p.trim().toLowerCase() === key)
+      )
+
+      return {
+        ...prev,
+        players: newPlayers,
+        gameHistory: newHistory,
+      }
+    })
+  }, [])
+
+  const addPlayer = useCallback((name: string) => {
+    const key = name.trim().toLowerCase()
+    if (!key) return
+
+    setStats(prev => {
+      if (prev.players[key]) return prev
+
+      return {
+        ...prev,
+        players: {
+          ...prev.players,
+          [key]: {
+            name: name.trim(),
+            wins: {} as Record<GameType, number>,
+            gamesPlayed: {} as Record<GameType, number>,
+          },
+        },
+      }
+    })
+  }, [])
+
   const resetStats = useCallback(() => {
     setStats(defaultStats)
     localStorage.removeItem("decision-hub-stats")
@@ -224,6 +267,8 @@ export function StatsProvider({ children }: { children: ReactNode }) {
         getMostPlayedGame,
         getRecentGames,
         updatePlayerName,
+        deletePlayer,
+        addPlayer,
         resetStats,
         soundEnabled,
         setSoundEnabled,
