@@ -42,6 +42,8 @@ interface StatsContextType {
   deletePlayer: (name: string) => void
   addPlayer: (name: string) => void
   resetStats: () => void
+  namedPlayers: string[]
+  setNamedPlayers: (players: string[]) => void
   soundEnabled: boolean
   setSoundEnabled: (enabled: boolean) => void
 }
@@ -65,6 +67,7 @@ const StatsContext = createContext<StatsContextType | undefined>(undefined)
 export function StatsProvider({ children }: { children: ReactNode }) {
   const [stats, setStats] = useState<StatsState>(defaultStats)
   const [soundEnabled, setSoundEnabledState] = useState(true)
+  const [namedPlayers, setNamedPlayersState] = useState<string[]>(["", "", "", "", "", ""])
 
   // Load from localStorage on mount
   useEffect(() => {
@@ -74,10 +77,16 @@ export function StatsProvider({ children }: { children: ReactNode }) {
         const parsed = JSON.parse(saved)
         setStats(parsed)
       }
-      
+
       const soundSetting = localStorage.getItem("decision-hub-sound")
       if (soundSetting !== null) {
         setSoundEnabledState(soundSetting === "true")
+      }
+
+      const playersSetting = localStorage.getItem("decision-hub-named-players")
+      if (playersSetting) {
+        const parsed = JSON.parse(playersSetting)
+        setNamedPlayersState(parsed)
       }
     } catch (e) {
       console.error("Failed to load stats:", e)
@@ -257,6 +266,11 @@ export function StatsProvider({ children }: { children: ReactNode }) {
     localStorage.removeItem("decision-hub-stats")
   }, [])
 
+  const setNamedPlayers = useCallback((players: string[]) => {
+    setNamedPlayersState(players)
+    localStorage.setItem("decision-hub-named-players", JSON.stringify(players))
+  }, [])
+
   return (
     <StatsContext.Provider
       value={{
@@ -270,6 +284,8 @@ export function StatsProvider({ children }: { children: ReactNode }) {
         deletePlayer,
         addPlayer,
         resetStats,
+        namedPlayers,
+        setNamedPlayers,
         soundEnabled,
         setSoundEnabled,
       }}

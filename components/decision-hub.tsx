@@ -6,6 +6,7 @@ import { LanguageProvider } from "@/lib/language-context"
 import { StatsProvider, type GameType } from "@/lib/stats-store"
 import { Dashboard } from "./dashboard"
 import { StatsCenter } from "./stats-center"
+import { PlayersSetup } from "./players-setup"
 import { GameWrapper } from "./game-wrapper"
 import { FingerDice } from "./games/finger-dice"
 import { DiceRoller } from "./games/dice-roller"
@@ -15,7 +16,7 @@ import { ColorRoulette } from "./games/color-roulette"
 import { ReactionTime } from "./games/reaction-time"
 import { DrawStraws } from "./games/draw-straws"
 
-type Screen = "dashboard" | "stats" | GameType
+type Screen = "dashboard" | "stats" | "players" | GameType
 
 const GAME_TITLES: Record<GameType, { he: string; en: string }> = {
   fingerDice: { he: "קוביית אצבעות", en: "Finger Dice" },
@@ -67,6 +68,7 @@ function DecisionHubContent() {
             <Dashboard
               onSelectGame={(game) => setScreen(game)}
               onOpenStats={() => setScreen("stats")}
+              onOpenPlayers={() => setScreen("players")}
             />
           </motion.div>
         )}
@@ -80,6 +82,18 @@ function DecisionHubContent() {
             transition={{ type: "spring", stiffness: 300, damping: 30 }}
           >
             <StatsCenter onBack={() => setScreen("dashboard")} />
+          </motion.div>
+        )}
+
+        {screen === "players" && (
+          <motion.div
+            key="players"
+            initial={{ opacity: 0, x: 50 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: 50 }}
+            transition={{ type: "spring", stiffness: 300, damping: 30 }}
+          >
+            <PlayersSetup onBack={() => setScreen("dashboard")} />
           </motion.div>
         )}
 

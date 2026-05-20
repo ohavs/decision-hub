@@ -10,6 +10,7 @@ import type { GameType } from "@/lib/stats-store"
 interface DashboardProps {
   onSelectGame: (game: GameType) => void
   onOpenStats: () => void
+  onOpenPlayers: () => void
 }
 
 const GAMES: { 
@@ -70,7 +71,7 @@ const GAMES: {
   },
 ]
 
-export function Dashboard({ onSelectGame, onOpenStats }: DashboardProps) {
+export function Dashboard({ onSelectGame, onOpenStats, onOpenPlayers }: DashboardProps) {
   const { t, language, setLanguage, direction } = useLanguage()
   const { soundEnabled, setSoundEnabled } = useStats()
   
@@ -254,7 +255,21 @@ export function Dashboard({ onSelectGame, onOpenStats }: DashboardProps) {
       <div className="fixed bottom-0 left-0 right-0 z-20 px-6 pb-6 bg-gradient-to-t from-background via-background/90 to-transparent pt-4">
         <div className="max-w-md mx-auto flex items-center gap-4">
           
-          {/* Stats icon button (Mockup look) */}
+          {/* Players button */}
+          <button
+            onClick={() => {
+              playSound("click", soundEnabled)
+              onOpenPlayers()
+            }}
+            className="p-5 rounded-full border-2 border-border bg-card text-foreground hover:bg-secondary/40 shadow-md transition-all cursor-pointer"
+            aria-label="Players"
+          >
+            <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
+            </svg>
+          </button>
+
+          {/* Stats icon button */}
           <button
             onClick={() => {
               playSound("click", soundEnabled)

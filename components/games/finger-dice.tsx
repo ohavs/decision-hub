@@ -7,16 +7,12 @@ import { useStats } from "@/lib/stats-store"
 import { playSound } from "@/lib/sounds"
 
 const FINGER_COLORS = [
-  "#3b82f6", // blue
-  "#f97316", // orange
-  "#10b981", // green
-  "#ec4899", // pink
-  "#8b5cf6", // purple
-  "#eab308", // yellow
-  "#06b6d4", // cyan
-  "#f43f5e", // rose
-  "#84cc16", // lime
-  "#a855f7", // violet
+  "#3b82f6",
+  "#f97316",
+  "#10b981",
+  "#ec4899",
+  "#8b5cf6",
+  "#eab308",
 ]
 
 type FingerTouch = {
@@ -24,21 +20,18 @@ type FingerTouch = {
   x: number
   y: number
   colorIndex: number
+  playerIndex: number
 }
 
-type GamePhase =
-  | "idle"       // waiting for fingers
-  | "ready"      // 2+ fingers placed, short delay before spin
-  | "spinning"   // roulette cycling through fingers
-  | "result"     // loser selected
+type GamePhase = "idle" | "ready" | "spinning" | "result"
 
 export function FingerDice() {
-  const { t, direction } = useLanguage()
-  const { soundEnabled, recordWin } = useStats()
+  const { t, language, direction } = useLanguage()
+  const { soundEnabled, recordWin, namedPlayers } = useStats()
 
   const [fingers, setFingers] = useState<Map<number, FingerTouch>>(new Map())
   const [phase, setPhase] = useState<GamePhase>("idle")
-  const [highlighted, setHighlighted] = useState<number | null>(null) // finger id being highlighted
+  const [highlighted, setHighlighted] = useState<number | null>(null)
   const [loserId, setLoserId] = useState<number | null>(null)
 
   const containerRef = useRef<HTMLDivElement>(null)
@@ -47,17 +40,11 @@ export function FingerDice() {
   const spinTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const readyTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const colorCounterRef = useRef(0)
-  const spinIndexRef = useRef(0)
+  const playerIndexCounterRef = useRef(0)
   const spinStepRef = useRef(0)
 
-  // Keep refs in sync
-  useEffect(() => {
-    phaseRef.current = phase
-  }, [phase])
-
-  useEffect(() => {
-    fingersRef.current = fingers
-  }, [fingers])
+  useEffect(() => { phaseRef.current = phase }, [phase])
+  useEffect(() => { fingersRef.current = fingers }, [fingers])
 
   const clearAllTimers = useCallback(() => {
     if (spinTimerRef.current) { clearTimeout(spinTimerRef.current); spinTimerRef.current = null }
@@ -71,42 +58,36 @@ export function FingerDice() {
     setHighlighted(null)
     setLoserId(null)
     colorCounterRef.current = 0
-    spinIndexRef.current = 0
+    playerIndexCounterRef.current = 0
     spinStepRef.current = 0
   }, [clearAllTimers])
 
-  // Start the roulette spin animation
+  const getPlayerName = useCallback((playerIndex: number): string => {
+    const named = namedPlayers[playerIndex]?.trim()
+    if (named) return named
+    return language === "he" ? `שחקן ${playerIndex + 1}` : `Player ${playerIndex + 1}`
+  }, [namedPlayers, language])
+
   const startSpin = useCallback(() => {
-    const currentFingers = Array.from(fingersRef.current.values())
+    const currentFingers: FingerTouch[] = Array.from(fingersRef.current.values())
     if (currentFingers.length < 2) return
 
     setPhase("spinning")
     phaseRef.current = "spinning"
 
-    // Predetermine the winner (loser in Swazi = the one selected)
     const loserIndex = Math.floor(Math.random() * currentFingers.length)
-    const loser = currentFingers[loserIndex]
 
-    // Total spin steps: starts fast, slows down
-    // We'll do N laps around all fingers, ending on the loser
     const totalFingers = currentFingers.length
-    // We want to land on loserIndex after totalSteps steps
-    // Start with step=0 pointing at index 0, end at loserIndex
-    // Do at least 3 full laps + landing step
     const minLaps = 3
     const minSteps = minLaps * totalFingers
-    // Align so last step lands on loser
     const extraSteps = ((loserIndex - (minSteps % totalFingers)) + totalFingers) % totalFingers
-    const totalSteps = minSteps + extraSteps + totalFingers // one extra lap for safety
+    const totalSteps = minSteps + extraSteps + totalFingers
 
     spinStepRef.current = 0
-    spinIndexRef.current = 0
 
     const getDelay = (step: number): number => {
-      // Start at 60ms, end around 600ms (easing out)
       const progress = step / totalSteps
-      const eased = progress * progress // quadratic ease-in for delay (starts fast, ends slow)
-      return 60 + eased * 540
+      return 60 + progress * progress * 540
     }
 
     const doStep = () => {
@@ -118,9 +99,7 @@ export function FingerDice() {
       const currentIndex = step % fingersCurrent.length
       const currentFinger: FingerTouch = fingersCurrent[currentIndex]
       setHighlighted(currentFinger.id)
-
       playSound("tick", soundEnabled)
-
       spinStepRef.current++
 
       if (step < totalSteps - 1) {
@@ -133,32 +112,26 @@ export function FingerDice() {
         setLoserId(finalLoser.id)
         setPhase("result")
         phaseRef.current = "result"
-
         playSound("lose", soundEnabled)
 
-        // Record stats
-        const participants = finalFingers.map((_, i) => `${t("game.fingerDice")} ${i + 1}`)
-        const loserName = participants[loserIndex % finalFingers.length]
+        const participants = finalFingers.map(f => getPlayerName(f.playerIndex))
+        const loserName = getPlayerName(finalLoser.playerIndex)
         recordWin("fingerDice", loserName, participants)
       }
     }
 
     spinTimerRef.current = setTimeout(doStep, getDelay(0))
-  }, [soundEnabled, recordWin, t])
+  }, [soundEnabled, recordWin, getPlayerName])
 
-  // When entering "ready" phase, wait briefly then spin
   const enterReady = useCallback(() => {
     if (phaseRef.current !== "idle") return
     setPhase("ready")
     phaseRef.current = "ready"
     readyTimerRef.current = setTimeout(() => {
-      if (phaseRef.current === "ready") {
-        startSpin()
-      }
+      if (phaseRef.current === "ready") startSpin()
     }, 1200)
   }, [startSpin])
 
-  // Touch handlers
   useEffect(() => {
     const el = containerRef.current
     if (!el) return
@@ -167,8 +140,7 @@ export function FingerDice() {
       e.preventDefault()
       e.stopPropagation()
 
-      const phase = phaseRef.current
-      if (phase === "result" || phase === "spinning") {
+      if (phaseRef.current === "result" || phaseRef.current === "spinning") {
         resetGame()
         return
       }
@@ -178,23 +150,21 @@ export function FingerDice() {
         for (let i = 0; i < e.changedTouches.length; i++) {
           const t = e.changedTouches[i]
           if (!next.has(t.identifier)) {
-            const colorIndex = colorCounterRef.current % FINGER_COLORS.length
-            colorCounterRef.current++
             next.set(t.identifier, {
               id: t.identifier,
               x: t.clientX,
               y: t.clientY,
-              colorIndex,
+              colorIndex: colorCounterRef.current % FINGER_COLORS.length,
+              playerIndex: playerIndexCounterRef.current,
             })
+            colorCounterRef.current++
+            playerIndexCounterRef.current++
             playSound("pop", soundEnabled)
           }
         }
-
-        // If we just reached 2 fingers and phase is idle, schedule spin
         if (next.size >= 2 && phaseRef.current === "idle") {
           setTimeout(enterReady, 0)
         }
-
         return next
       })
     }
@@ -202,9 +172,7 @@ export function FingerDice() {
     const onTouchMove = (e: TouchEvent) => {
       e.preventDefault()
       e.stopPropagation()
-
-      const phase = phaseRef.current
-      if (phase === "result" || phase === "spinning") return
+      if (phaseRef.current === "result" || phaseRef.current === "spinning") return
 
       setFingers((prev: Map<number, FingerTouch>) => {
         const next = new Map(prev)
@@ -225,27 +193,19 @@ export function FingerDice() {
       e.preventDefault()
       e.stopPropagation()
 
-      const phase = phaseRef.current
-      if (phase === "result") {
-        resetGame()
-        return
-      }
-
-      if (phase === "spinning") return // ignore during spin
+      if (phaseRef.current === "result") { resetGame(); return }
+      if (phaseRef.current === "spinning") return
 
       setFingers((prev: Map<number, FingerTouch>) => {
         const next = new Map(prev)
         for (let i = 0; i < e.changedTouches.length; i++) {
           next.delete(e.changedTouches[i].identifier)
         }
-
-        // If we drop below 2 fingers, cancel ready
         if (next.size < 2 && phaseRef.current === "ready") {
           clearAllTimers()
           setPhase("idle")
           phaseRef.current = "idle"
         }
-
         return next
       })
     }
@@ -267,10 +227,11 @@ export function FingerDice() {
   const showInstructions = phase === "idle" && fingerArray.length === 0
 
   return (
+    // No dir prop here — finger positions use physical screen coords (clientX/clientY)
+    // which are always LTR. dir="rtl" on a transformed parent inverts translateX.
     <div
       ref={containerRef}
       className="fixed inset-0 bg-background overflow-hidden select-none touch-none"
-      dir={direction}
       onClick={() => {
         if (phase === "result" || phase === "spinning") resetGame()
       }}
@@ -281,7 +242,7 @@ export function FingerDice() {
         <div className="absolute bottom-20 right-10 w-96 h-96 rounded-full bg-purple-300/20 blur-3xl" />
       </div>
 
-      {/* Instructions overlay */}
+      {/* Instructions */}
       <AnimatePresence>
         {showInstructions && (
           <motion.div
@@ -289,6 +250,7 @@ export function FingerDice() {
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.95 }}
             className="absolute inset-0 flex flex-col items-center justify-center p-6 text-center pointer-events-none"
+            dir={direction}
           >
             <div className="bg-card border-2 border-border rounded-[32px] px-10 py-10 flex flex-col items-center shadow-xl max-w-xs w-full">
               <motion.span
@@ -327,6 +289,7 @@ export function FingerDice() {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0 }}
             className="absolute bottom-20 left-0 right-0 text-center pointer-events-none"
+            dir={direction}
           >
             <span className="text-sm font-bold text-muted-foreground">
               {t("game.placeFinger")}
@@ -335,7 +298,7 @@ export function FingerDice() {
         )}
       </AnimatePresence>
 
-      {/* Ready countdown ring */}
+      {/* Ready pulse */}
       <AnimatePresence>
         {phase === "ready" && (
           <motion.div
@@ -354,91 +317,48 @@ export function FingerDice() {
         )}
       </AnimatePresence>
 
-      {/* Status text at top */}
-      <AnimatePresence>
-        {(phase === "ready" || phase === "spinning") && (
-          <motion.div
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0 }}
-            className="absolute top-20 left-0 right-0 text-center pointer-events-none z-10"
-          >
-            <span className="text-base font-black text-foreground/60 tracking-widest uppercase">
-              {phase === "ready" ? "..." : "🎲"}
-            </span>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* Finger circles */}
+      {/* Finger circles — positioned via style (left/top), NOT framer-motion x/y transforms,
+          because dir="rtl" on the parent inverts translateX direction */}
       <AnimatePresence>
         {fingerArray.map((finger: FingerTouch) => {
           const color = FINGER_COLORS[finger.colorIndex]
           const isHighlighted = highlighted === finger.id
           const isLoser = phase === "result" && loserId === finger.id
           const isWinner = phase === "result" && loserId !== null && loserId !== finger.id
-
           const size = isLoser ? 130 : isWinner ? 90 : 110
-          const opacity = isWinner ? 0.35 : 1
+          const playerName = getPlayerName(finger.playerIndex)
 
           return (
             <motion.div
               key={finger.id}
               className="absolute pointer-events-none"
               initial={{ scale: 0, opacity: 0 }}
-              animate={{
-                scale: 1,
-                opacity,
-                x: finger.x - size / 2,
-                y: finger.y - size / 2,
+              animate={{ scale: 1, opacity: isWinner ? 0.35 : 1 }}
+              exit={{ scale: 0, opacity: 0 }}
+              transition={{ type: "spring", stiffness: 400, damping: 28, opacity: { duration: 0.2 } }}
+              style={{
+                left: finger.x - size / 2,
+                top: finger.y - size / 2,
                 width: size,
                 height: size,
               }}
-              exit={{ scale: 0, opacity: 0 }}
-              transition={{
-                type: "spring",
-                stiffness: 400,
-                damping: 28,
-                opacity: { duration: 0.2 },
-              }}
             >
-              {/* Glow ring when highlighted (spinning) */}
-              {isHighlighted && (
+              {/* Glow */}
+              {(isHighlighted || isLoser) && (
                 <motion.div
                   className="absolute inset-0 rounded-full"
-                  style={{ background: color, filter: "blur(20px)", opacity: 0.6 }}
-                  animate={{ scale: [1, 1.3, 1] }}
-                  transition={{ duration: 0.25, repeat: Infinity }}
-                />
-              )}
-
-              {/* Winner glow */}
-              {isLoser && (
-                <motion.div
-                  className="absolute inset-0 rounded-full"
-                  style={{ background: color, filter: "blur(24px)", opacity: 0.5 }}
-                  animate={{ scale: [1, 1.4, 1] }}
-                  transition={{ duration: 0.8, repeat: Infinity }}
+                  style={{ background: color, filter: "blur(22px)", opacity: 0.55 }}
+                  animate={{ scale: [1, 1.35, 1] }}
+                  transition={{ duration: isHighlighted ? 0.25 : 0.8, repeat: Infinity }}
                 />
               )}
 
               {/* Main circle */}
               <motion.div
-                className="absolute inset-2 rounded-full flex items-center justify-center border-4 border-white/50 shadow-lg"
-                style={{
-                  background: `radial-gradient(circle at 35% 30%, ${color}dd, ${color}99)`,
-                }}
-                animate={
-                  isHighlighted
-                    ? { scale: [1, 1.06, 1] }
-                    : isLoser
-                    ? { scale: [1, 1.05, 1] }
-                    : {}
-                }
-                transition={{
-                  duration: isHighlighted ? 0.2 : 0.7,
-                  repeat: isHighlighted || isLoser ? Infinity : 0,
-                }}
+                className="absolute inset-2 rounded-full flex items-center justify-center border-4 border-white/50 shadow-lg overflow-hidden"
+                style={{ background: `radial-gradient(circle at 35% 30%, ${color}dd, ${color}99)` }}
+                animate={isHighlighted ? { scale: [1, 1.06, 1] } : isLoser ? { scale: [1, 1.04, 1] } : {}}
+                transition={{ duration: isHighlighted ? 0.2 : 0.7, repeat: isHighlighted || isLoser ? Infinity : 0 }}
               >
                 {/* Gloss */}
                 <div
@@ -446,29 +366,45 @@ export function FingerDice() {
                   style={{ background: "radial-gradient(circle, rgba(255,255,255,0.9), transparent)" }}
                 />
 
-                {/* Loser emoji */}
+                {/* Player name (idle/ready/spinning) */}
+                {!isLoser && !isWinner && (
+                  <span
+                    className="text-white font-black text-xs text-center px-1 leading-tight"
+                    style={{ textShadow: "0 1px 4px rgba(0,0,0,0.4)", maxWidth: "90%" }}
+                  >
+                    {playerName}
+                  </span>
+                )}
+
+                {/* Spinning white dot */}
+                {isHighlighted && (
+                  <motion.div
+                    initial={{ scale: 0 }}
+                    animate={{ scale: 1 }}
+                    className="absolute w-5 h-5 bg-white rounded-full shadow-lg"
+                  />
+                )}
+
+                {/* Loser */}
                 {isLoser && (
                   <motion.div
                     initial={{ scale: 0, rotate: -30 }}
                     animate={{ scale: 1, rotate: 0 }}
                     transition={{ type: "spring", stiffness: 300 }}
-                    className="text-4xl"
+                    className="flex flex-col items-center gap-0.5"
                   >
-                    💀
+                    <span className="text-3xl">💀</span>
+                    <span
+                      className="text-white font-black text-xs text-center leading-tight px-1"
+                      style={{ textShadow: "0 1px 4px rgba(0,0,0,0.5)" }}
+                    >
+                      {playerName}
+                    </span>
                   </motion.div>
-                )}
-
-                {/* Spinning highlight dot */}
-                {isHighlighted && !isLoser && (
-                  <motion.div
-                    initial={{ scale: 0 }}
-                    animate={{ scale: 1 }}
-                    className="w-5 h-5 bg-white rounded-full shadow-lg"
-                  />
                 )}
               </motion.div>
 
-              {/* Outer spinning ring when highlighted */}
+              {/* Spinning outline ring */}
               {isHighlighted && (
                 <motion.div
                   className="absolute inset-0 rounded-full border-4"
@@ -491,9 +427,10 @@ export function FingerDice() {
             exit={{ opacity: 0 }}
             transition={{ type: "spring", stiffness: 300 }}
             className="absolute bottom-14 left-0 right-0 flex justify-center pointer-events-none"
+            dir={direction}
           >
-            <div className="bg-foreground text-background px-7 py-4 rounded-full shadow-2xl flex flex-col items-center gap-1">
-              <span className="font-black text-base tracking-wide">
+            <div className="bg-foreground text-background px-7 py-4 rounded-full shadow-2xl">
+              <span className="font-black text-base">
                 {t("game.tapToRestart")}
               </span>
             </div>
