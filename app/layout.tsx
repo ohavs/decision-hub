@@ -16,27 +16,30 @@ export const viewport: Viewport = {
   themeColor: '#000000',
 }
 
+const isProd = process.env.NODE_ENV === 'production';
+const prefix = isProd ? '/decision-hub' : '';
+
 export const metadata: Metadata = {
   title: 'Decision Hub - Ultimate Group Games',
   description: 'A comprehensive multi-game decision hub for groups with finger dice, coin flip, dice roller, and more',
   generator: 'v0.app',
-  manifest: process.env.NODE_ENV === 'production' ? '/decision-hub/manifest.json' : '/manifest.json',
+  manifest: isProd ? '/decision-hub/manifest.json' : '/manifest.json',
   icons: {
     icon: [
       {
-        url: '/icon-light-32x32.png',
+        url: `${prefix}/icon-light-32x32.png`,
         media: '(prefers-color-scheme: light)',
       },
       {
-        url: '/icon-dark-32x32.png',
+        url: `${prefix}/icon-dark-32x32.png`,
         media: '(prefers-color-scheme: dark)',
       },
       {
-        url: '/icon.svg',
+        url: `${prefix}/icon.svg`,
         type: 'image/svg+xml',
       },
     ],
-    apple: '/apple-icon.png',
+    apple: `${prefix}/apple-icon.png`,
   },
 }
 
