@@ -52,7 +52,7 @@ function DecisionHubContent() {
     }
   }
 
-  const isGame = screen !== "dashboard" && screen !== "stats"
+  const isGame = screen !== "dashboard" && screen !== "stats" && screen !== "players"
 
   return (
     <div className="fixed inset-0 bg-background overflow-hidden">

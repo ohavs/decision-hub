@@ -67,7 +67,7 @@ const StatsContext = createContext<StatsContextType | undefined>(undefined)
 export function StatsProvider({ children }: { children: ReactNode }) {
   const [stats, setStats] = useState<StatsState>(defaultStats)
   const [soundEnabled, setSoundEnabledState] = useState(true)
-  const [namedPlayers, setNamedPlayersState] = useState<string[]>(["", "", "", "", "", ""])
+  const [namedPlayers, setNamedPlayersState] = useState<string[]>(["", "", "", "", "", "", "", ""])
 
   // Load from localStorage on mount
   useEffect(() => {

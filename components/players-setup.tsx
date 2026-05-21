@@ -7,12 +7,14 @@ import { useStats } from "@/lib/stats-store"
 import { playSound } from "@/lib/sounds"
 
 const PLAYER_COLORS = [
-  "#3b82f6",
-  "#f97316",
-  "#10b981",
-  "#ec4899",
-  "#8b5cf6",
-  "#eab308",
+  "#3b82f6", // 1 blue
+  "#f97316", // 2 orange
+  "#10b981", // 3 green
+  "#ec4899", // 4 pink
+  "#8b5cf6", // 5 purple
+  "#eab308", // 6 yellow
+  "#06b6d4", // 7 cyan
+  "#f43f5e", // 8 rose
 ]
 
 interface PlayersSetupProps {
@@ -25,8 +27,8 @@ export function PlayersSetup({ onBack }: PlayersSetupProps) {
 
   const [localPlayers, setLocalPlayers] = useState<string[]>(() => {
     const p = [...namedPlayers]
-    while (p.length < 6) p.push("")
-    return p.slice(0, 6)
+    while (p.length < 8) p.push("")
+    return p.slice(0, 8)
   })
 
   const activeCount = localPlayers.filter((n: string) => n.trim()).length
@@ -37,12 +39,6 @@ export function PlayersSetup({ onBack }: PlayersSetupProps) {
     setLocalPlayers(next)
   }
 
-  const handleSave = () => {
-    setNamedPlayers(localPlayers)
-    playSound("success", soundEnabled)
-    onBack()
-  }
-
   const handleClear = (index: number) => {
     const next = [...localPlayers]
     next[index] = ""
@@ -50,8 +46,14 @@ export function PlayersSetup({ onBack }: PlayersSetupProps) {
     playSound("click", soundEnabled)
   }
 
+  const handleSave = () => {
+    setNamedPlayers(localPlayers)
+    playSound("success", soundEnabled)
+    onBack()
+  }
+
   return (
-    <div className="fixed inset-0 bg-background overflow-hidden flex flex-col px-6 pt-8 pb-6" dir={direction}>
+    <div className="fixed inset-0 bg-background flex flex-col px-6 pt-8 pb-6" dir={direction}>
 
       {/* Background blobs */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none opacity-40">
@@ -63,7 +65,7 @@ export function PlayersSetup({ onBack }: PlayersSetupProps) {
       <motion.header
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="relative z-10 flex items-center justify-between mb-8"
+        className="relative z-10 flex items-center justify-between mb-6 flex-shrink-0"
       >
         <button
           onClick={() => { playSound("click", soundEnabled); onBack() }}
@@ -82,16 +84,16 @@ export function PlayersSetup({ onBack }: PlayersSetupProps) {
             {language === "he" ? "שחקנים" : "Players"}
           </h1>
           <p className="text-xs font-bold text-muted-foreground mt-0.5">
-            {language === "he" ? "הגדר שמות לעד 6 שחקנים" : "Set names for up to 6 players"}
+            {language === "he" ? "הגדר שמות לשחקנים 1–8" : "Set names for players 1–8"}
           </p>
         </div>
 
         <div className="w-11" />
       </motion.header>
 
-      {/* Player slots */}
-      <div className="flex-1 overflow-y-auto">
-        <div className="space-y-3 max-w-md mx-auto">
+      {/* Player slots — scrollable */}
+      <div className="flex-1 overflow-y-auto relative z-10">
+        <div className="space-y-2.5 max-w-md mx-auto pb-4">
           {localPlayers.map((name: string, index: number) => {
             const color = PLAYER_COLORS[index]
             const placeholder = language === "he" ? `שחקן ${index + 1}` : `Player ${index + 1}`
@@ -99,14 +101,14 @@ export function PlayersSetup({ onBack }: PlayersSetupProps) {
             return (
               <motion.div
                 key={index}
-                initial={{ opacity: 0, y: 15 }}
+                initial={{ opacity: 0, y: 12 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.05 }}
+                transition={{ delay: index * 0.04 }}
                 className="flex items-center gap-3"
               >
-                {/* Color dot + number */}
+                {/* Numbered color dot */}
                 <div
-                  className="w-11 h-11 rounded-full flex-shrink-0 flex items-center justify-center shadow-sm border-2 border-white/60"
+                  className="w-10 h-10 rounded-full flex-shrink-0 flex items-center justify-center shadow-sm"
                   style={{ background: color }}
                 >
                   <span className="text-white font-black text-sm">{index + 1}</span>
@@ -120,7 +122,7 @@ export function PlayersSetup({ onBack }: PlayersSetupProps) {
                     onChange={(e: ChangeEvent<HTMLInputElement>) => handleChange(index, e.target.value)}
                     placeholder={placeholder}
                     maxLength={20}
-                    className="w-full px-4 py-3 rounded-full border-2 border-border bg-card text-foreground text-sm font-bold focus:outline-none focus:border-primary transition-colors placeholder:text-muted-foreground/50"
+                    className="w-full px-4 py-2.5 rounded-full border-2 border-border bg-card text-foreground text-sm font-bold focus:outline-none focus:border-primary transition-colors placeholder:text-muted-foreground/40"
                   />
                   <AnimatePresence>
                     {name && (
@@ -141,19 +143,18 @@ export function PlayersSetup({ onBack }: PlayersSetupProps) {
               </motion.div>
             )
           })}
-        </div>
 
-        {/* Info note */}
-        <motion.p
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.4 }}
-          className="text-center text-xs font-bold text-muted-foreground mt-6 max-w-xs mx-auto leading-relaxed"
-        >
-          {language === "he"
-            ? "שמות אלה ישמשו בכל המשחקים ויופיעו בטבלת הסטטיסטיקות"
-            : "These names will be used in all games and appear in the stats table"}
-        </motion.p>
+          <motion.p
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.4 }}
+            className="text-center text-xs font-bold text-muted-foreground pt-2 leading-relaxed"
+          >
+            {language === "he"
+              ? "שמות אלה ישמשו בכל המשחקים ויופיעו בטבלת הסטטיסטיקות"
+              : "These names will be used in all games and appear in the stats table"}
+          </motion.p>
+        </div>
       </div>
 
       {/* Save button */}
@@ -161,7 +162,7 @@ export function PlayersSetup({ onBack }: PlayersSetupProps) {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.3 }}
-        className="pt-4"
+        className="pt-4 flex-shrink-0 relative z-10"
       >
         <button
           onClick={handleSave}
