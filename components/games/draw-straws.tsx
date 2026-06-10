@@ -15,7 +15,13 @@ interface Straw {
 
 export function DrawStraws() {
   const { t, language, direction } = useLanguage()
-  const { soundEnabled, recordWin } = useStats()
+  const { soundEnabled, recordWin, namedPlayers } = useStats()
+
+  const getPlayerName = (index: number) => {
+    const named = namedPlayers[index]?.trim()
+    if (named) return named
+    return language === "he" ? `שחקן ${index + 1}` : `Player ${index + 1}`
+  }
   
   const [playerCount, setPlayerCount] = useState(4)
   const [straws, setStraws] = useState<Straw[]>([])
@@ -55,7 +61,7 @@ export function DrawStraws() {
     
     playSound("whoosh", soundEnabled)
     
-    const playerName = `${language === "he" ? "שחקן" : "Player"} ${currentPlayer}`
+    const playerName = getPlayerName(currentPlayer - 1)
     
     setStraws(prev => prev.map(s => 
       s.id === strawId ? { ...s, pulled: true, pulledBy: playerName } : s
@@ -68,9 +74,7 @@ export function DrawStraws() {
         setRevealAll(true)
         playSound("lose", soundEnabled)
         
-        const participants = Array.from({ length: playerCount }, (_, i) => 
-          `${language === "he" ? "שחקן" : "Player"} ${i + 1}`
-        )
+        const participants = Array.from({ length: playerCount }, (_, i) => getPlayerName(i))
         const winnerIndex = Math.floor(Math.random() * (playerCount - 1))
         const winners = participants.filter((_, i) => i + 1 !== currentPlayer)
         if (winners.length > 0) {
@@ -82,7 +86,7 @@ export function DrawStraws() {
         setCurrentPlayer(prev => prev + 1)
       }
     }
-  }, [gameStarted, straws, currentPlayer, playerCount, loser, soundEnabled, language, recordWin])
+  }, [gameStarted, straws, currentPlayer, playerCount, loser, soundEnabled, language, recordWin, namedPlayers])
 
   const resetGame = () => {
     setGameStarted(false)
@@ -155,7 +159,7 @@ export function DrawStraws() {
           <div className="text-center mb-6 relative z-10">
             <p className="text-xs font-black uppercase text-muted-foreground tracking-wider mb-1">{t("straws.pull")}</p>
             <p className="text-2xl font-black text-foreground">
-              {language === "he" ? "שחקן" : "Player"} {currentPlayer}
+              {getPlayerName(currentPlayer - 1)}
             </p>
           </div>
 
@@ -222,7 +226,7 @@ export function DrawStraws() {
                         background: "linear-gradient(to right, #86efac, #10b981, #059669)",
                       }}
                     />
-                    <p className="text-[10px] font-black text-foreground">{straw.pulledBy?.split(" ")[1]}</p>
+                    <p className="text-[10px] font-black text-foreground truncate max-w-[48px]">{straw.pulledBy}</p>
                   </div>
                 ))}
               </div>
@@ -251,7 +255,7 @@ export function DrawStraws() {
           >
             <p className="text-xs font-black uppercase text-muted-foreground tracking-wider mb-2">{t("straws.short")}</p>
             <p className="text-4xl font-black text-red-500 mb-6">
-              {language === "he" ? "שחקן" : "Player"} {loser}
+              {loser !== null ? getPlayerName(loser - 1) : ""}
             </p>
             
             {/* Visual short straw */}

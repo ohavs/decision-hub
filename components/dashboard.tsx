@@ -204,17 +204,19 @@ export function Dashboard({ onSelectGame, onOpenStats, onOpenPlayers }: Dashboar
       </header>
 
       {/* ── Carousel ── */}
+      {/* dir="ltr" is required: RTL makes scrollLeft negative in Chrome, breaking activeIndex math */}
       <div
         ref={carouselRef}
         onScroll={handleScroll}
+        dir="ltr"
         className="flex-1 min-h-0 flex py-4"
         style={{
           overflowX: "auto",
           overflowY: "hidden",
           scrollSnapType: "x mandatory",
           WebkitOverflowScrolling: "touch" as React.CSSProperties["WebkitOverflowScrolling"],
-          paddingInlineStart: "11vw",
-          paddingInlineEnd: "11vw",
+          paddingLeft: "11vw",
+          paddingRight: "11vw",
           gap: "16px",
           scrollbarWidth: "none",
           msOverflowStyle: "none",
@@ -296,7 +298,7 @@ export function Dashboard({ onSelectGame, onOpenStats, onOpenPlayers }: Dashboar
                 </div>
 
                 {/* Text block */}
-                <div className="w-full">
+                <div className="w-full" dir={direction}>
                   <h2
                     className="text-white font-black text-center leading-tight mb-2"
                     style={{ fontSize: "clamp(22px, 5.5vw, 30px)", letterSpacing: "-0.02em" }}

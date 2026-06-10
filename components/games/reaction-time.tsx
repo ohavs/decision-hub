@@ -28,7 +28,7 @@ const ZONE_COLORS = [
 
 export function ReactionTime() {
   const { t, language, direction } = useLanguage()
-  const { soundEnabled, recordWin } = useStats()
+  const { soundEnabled, recordWin, namedPlayers } = useStats()
   
   const [playerCount, setPlayerCount] = useState(2)
   const [players, setPlayers] = useState<PlayerZone[]>([])
@@ -38,13 +38,19 @@ export function ReactionTime() {
   
   const timeoutRef = useRef<NodeJS.Timeout | null>(null)
 
+  const getPlayerName = (index: number) => {
+    const named = namedPlayers[index]?.trim()
+    if (named) return named
+    return language === "he" ? `שחקן ${index + 1}` : `Player ${index + 1}`
+  }
+
   // Initialize players
   useEffect(() => {
     if (phase === "setup") {
       setPlayers(
         Array.from({ length: playerCount }, (_, i) => ({
           id: i,
-          name: `${language === "he" ? "שחקן" : "Player"} ${i + 1}`,
+          name: getPlayerName(i),
           reactionTime: null,
           tappedTooEarly: false,
           color: ZONE_COLORS[i % ZONE_COLORS.length].hex,
@@ -52,7 +58,8 @@ export function ReactionTime() {
         }))
       )
     }
-  }, [playerCount, phase, language])
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [playerCount, phase, language, namedPlayers])
 
   const startGame = useCallback(() => {
     setPhase("waiting")
